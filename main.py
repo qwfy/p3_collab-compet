@@ -33,6 +33,7 @@ BRAIN_NAME = 'TennisBrain'
 NUM_HOMOGENEOUS_AGENTS = 2
 SOLVE_NUM_EPISODES = 100
 SOLVE_REWARD = 0.5
+NUM_STACKS = 3
 
 
 # %%
@@ -76,7 +77,8 @@ def train(hp):
     state_length=state_length,
     action_length=action_length,
     hp=hp,
-    num_agents=NUM_AGENTS,
+    num_homogeneous_agents=NUM_HOMOGENEOUS_AGENTS,
+    num_stacks=NUM_STACKS,
     writer=writer)
 
   window_rewards = collections.deque(maxlen=SOLVE_NUM_EPISODES)
