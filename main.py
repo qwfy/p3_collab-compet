@@ -1,23 +1,20 @@
 import os
 import sys
 import logging
-import socket
 
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s')
-file_handler = logging.FileHandler(f'run/run.{socket.gethostname()}.log')
-file_handler.setFormatter(formatter)
-root_logger.addHandler(file_handler)
+ROOT_LOGGER = logging.getLogger()
+ROOT_LOGGER.setLevel(logging.INFO)
+FORMATTER = logging.Formatter('[%(asctime)s] [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s')
 stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-root_logger.addHandler(stream_handler)
+stream_handler.setFormatter(FORMATTER)
+ROOT_LOGGER.addHandler(stream_handler)
 logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.join(os.getcwd(), 'python-priorityq'))
 
 os.makedirs('run/model', exist_ok=True)
 os.makedirs('run/summary', exist_ok=True)
+os.makedirs('run/log', exist_ok=True)
 
 import time
 from unityagents import UnityEnvironment
@@ -59,6 +56,11 @@ class HyperParam:
 def train(hp):
   time_start = time.time()
   run_id = time.strftime('%b%d_%H-%M-%S_%z', time.localtime(time_start))
+
+  file_handler = logging.FileHandler(f'run/log/{run_id}.log')
+  file_handler.setFormatter(FORMATTER)
+  ROOT_LOGGER.addHandler(file_handler)
+
   repo = git.Repo()
 
   logger.info('======= run_id %s started at %s =======', run_id, time.strftime('%b%d_%H-%M-%S_%z'))
