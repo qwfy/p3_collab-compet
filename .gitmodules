@@ -1,0 +1,3 @@
+[submodule "python-priorityq"]
+	path = python-priorityq
+	url = https://github.com/elplatt/python-priorityq.git
