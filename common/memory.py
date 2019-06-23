@@ -3,15 +3,9 @@ import random
 import numpy as np
 import priorityq
 
-
-
-class Experience:
-  def __init__(self, state, action, reward, next_state, done):
-    self.state = state
-    self.action = action
-    self.reward = reward
-    self.next_state = next_state
-    self.done = done
+Experience = collections.namedtuple(
+  'Experience',
+  field_names=['state', 'action', 'reward', 'next_state', 'done'])
 
 
 class Batch:
