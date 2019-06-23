@@ -25,6 +25,8 @@ import numpy as np
 import collections
 import tqdm
 import dataclasses
+import random
+import torch
 
 
 # %%
@@ -52,6 +54,10 @@ class HyperParam:
 
 # %%
 def train(hp):
+  random.seed(0)
+  np.random.seed(0)
+  torch.manual_seed(0)
+
   time_start = time.time()
   run_id = time.strftime('%b%d_%H-%M-%S_%z', time.localtime(time_start))
 
