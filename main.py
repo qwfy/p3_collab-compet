@@ -32,7 +32,7 @@ SIMULATOR_PATH = 'Tennis_Linux/Tennis.x86_64'
 BRAIN_NAME = 'TennisBrain'
 NUM_HOMOGENEOUS_AGENTS = 2
 SOLVE_NUM_EPISODES = 100
-SOLVE_REWARD = 30.0
+SOLVE_REWARD = 0.5
 
 
 # %%
@@ -45,11 +45,8 @@ class HyperParam:
   critic_local_lr: float
   actor_local_lr: float
   update_target_every: int
-  learn_every_steps: int
-  learn_passes: int
+  learn_every_new_samples: int
   soft_update_tau: float
-  ou_theta: float
-  ou_sigma: float
 
 
 # %%
@@ -133,21 +130,16 @@ def train(hp):
 
 
 # %%
-# [paper]: Continuous Control with Deep Reinforcement Learning
 HP = HyperParam(
-  memory_max_size=int(1e6),  # [paper]
+  memory_max_size=int(1e6),
   num_episodes=300,
-  batch_size=128,
-  gamma=0.99,  # [paper]
-  critic_local_lr=1e-3,  # [paper]
-  actor_local_lr=1e-3,
+  batch_size=1024,
+  gamma=0.95,
+  critic_local_lr=1e-2,
+  actor_local_lr=1e-2,
   update_target_every=1,
-  learn_every_steps=20,
-  learn_passes=10,
-  soft_update_tau=1e-3,  # [paper]
-  ou_theta=0.15,  # [paper]
-  ou_sigma=0.2)  # [paper]
-
+  learn_every_new_samples=100,
+  soft_update_tau=1e-2)
 
 if __name__ == '__main__':
   train(hp=HP)
