@@ -30,7 +30,7 @@ import dataclasses
 # %%
 SIMULATOR_PATH = 'Tennis_Linux/Tennis.x86_64'
 BRAIN_NAME = 'TennisBrain'
-NUM_AGENTS = 20
+NUM_HOMOGENEOUS_AGENTS = 2
 SOLVE_NUM_EPISODES = 100
 SOLVE_REWARD = 30.0
 
@@ -86,7 +86,9 @@ def train(hp):
 
   for i_episode in range(hp.num_episodes):
     states = env.reset(train_mode=True)[BRAIN_NAME].vector_observations
-    episode_reward = 0
+
+    # this records the episode reward for each agent
+    episode_rewards = np.zeros(NUM_HOMOGENEOUS_AGENTS)
 
     while True:
       actions = agent.act(states)
@@ -96,7 +98,7 @@ def train(hp):
       dones = env_info.local_done
 
       agent.step(states, actions, rewards, next_states, dones)
-      episode_reward += np.mean(rewards)
+      episode_rewards += rewards
 
       if any(dones):
         break
@@ -104,10 +106,17 @@ def train(hp):
         states = next_states
 
     pbar.update(1)
+
+    # the episode reward is defined to be the maximum of all agents
+    episode_reward = np.max(episode_rewards)
+    writer.add_scalar('episode_reward_agent_max', episode_reward, i_episode)
+    for i, reward in enumerate(episode_rewards):
+      writer.add_scalar('episode_reward_agent_{i}', reward, i_episode)
+
     window_rewards.append(episode_reward)
-    writer.add_scalar('episode_reward', episode_reward, i_episode)
     mean_reward = np.mean(window_rewards)
-    writer.add_scalar(f'episode_reward_avg_over_{SOLVE_NUM_EPISODES}_episodes', mean_reward, i_episode)
+    writer.add_scalar(f'episode_reward_agent_max_avg_over_{SOLVE_NUM_EPISODES}_episodes', mean_reward, i_episode)
+
     if len(window_rewards) >= SOLVE_NUM_EPISODES and mean_reward >= SOLVE_REWARD:
       save_dir = os.path.join('run/model', f'{run_id}_{i_episode}')
       os.makedirs(save_dir, exist_ok=True)
