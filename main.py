@@ -140,7 +140,7 @@ def train(hp):
 # %%
 HP = HyperParam(
   memory_max_size=int(1e6),
-  num_episodes=300,
+  num_episodes=25000,
   batch_size=1024,
   gamma=0.95,
   critic_local_lr=1e-2,
