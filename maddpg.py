@@ -21,22 +21,23 @@ class Actor(nn.Module):
 
   def __init__(self, state_length, action_length):
     nn.Module.__init__(self)
-    self.fc1 = nn.Linear(in_features=state_length, out_features=400)
-    self.bn1 = nn.BatchNorm1d(num_features=400)
-    self.fc2 = nn.Linear(in_features=400, out_features=300)
-    self.fc3 = common.noisy_linear.NoisyLinear(in_features=300, out_features=action_length)
+    self.fc1 = nn.Linear(in_features=state_length, out_features=64)
+    self.fc2 = nn.Linear(in_features=64, out_features=64)
+    self.fc3 = common.noisy_linear.NoisyLinear(in_features=64, out_features=64)
+    self.fc4 = common.noisy_linear.NoisyLinear(in_features=64, out_features=action_length)
     self._init_weights()
 
   def forward(self, states):
     x = states
-    x = F.relu(self.bn1(self.fc1(x)))
+    x = F.relu(self.fc1(x))
     x = F.relu(self.fc2(x))
-    x = F.tanh(self.fc3(x))
+    x = F.relu(self.fc3(x))
+    x = F.tanh(self.fc4(x))
     return x
 
   def sample_epsilon(self):
     with torch.no_grad():
-      for x in [self.fc3]:
+      for x in [self.fc3, self.fc4]:
         x.sample_epsilon()
 
   def _init_weights(self):
@@ -48,23 +49,25 @@ class Critic(nn.Module):
 
   def __init__(self, state_length, action_length):
     nn.Module.__init__(self)
-    self.fc1 = nn.Linear(in_features=state_length, out_features=400)
-    self.bn1 = nn.BatchNorm1d(num_features=400)
-    self.fc2 = nn.Linear(in_features=400+action_length, out_features=300)
-    self.fc3 = nn.Linear(in_features=300, out_features=1)
+    self.fc1 = nn.Linear(in_features=state_length+action_length, out_features=64)
+    self.fc2 = nn.Linear(in_features=64, out_features=64)
+    self.fc3 = nn.Linear(in_features=64, out_features=64)
+    self.fc4 = nn.Linear(in_features=64, out_features=1)
     self._init_weights()
 
   def forward(self, states, actions):
-    states = F.relu(self.bn1(self.fc1(states)))
     x = torch.cat([states, actions], dim=1)
+    x = F.relu(self.fc1(x))
     x = F.relu(self.fc2(x))
-    x = self.fc3(x)
+    x = F.relu(self.fc3(x))
+    x = self.fc4(x)
     return x
 
   def _init_weights(self):
     self.fc1.weight.data.uniform_(*weight_range(self.fc1))
     self.fc2.weight.data.uniform_(*weight_range(self.fc2))
-    self.fc3.weight.data.uniform_(-3e-3, 3e-3)
+    self.fc3.weight.data.uniform_(*weight_range(self.fc3))
+    self.fc4.weight.data.uniform_(-3e-3, 3e-3)
 
 
 class Agent:
