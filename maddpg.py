@@ -160,6 +160,9 @@ class Agent:
     batch.dones = torch.from_numpy(batch.dones).cuda()
 
     def f():
+      self._map(lambda i: self._actors_local[i].zero_grad())
+      self._map(lambda i: self._critics_local[i].zero_grad())
+
       # calculate the target Q value
       # on the next states, with the target actions on the next states
       with torch.no_grad():
@@ -188,9 +191,10 @@ class Agent:
     f()
 
     def f():
+      self._map(lambda i: self._actors_local[i].zero_grad())
+      self._map(lambda i: self._critics_local[i].zero_grad())
+
       # train the local actor
-      self._actors_local[i_agent].zero_grad()
-      self._critics_local[i_agent].zero_grad()
       as_l = self._map(lambda i: self._actors_local[i](batch.states[:, i]))
       as_l = torch.cat(as_l, dim=1)
       qs_l = self._critics_local[i_agent](self._view_agents_flat(batch.states), as_l)
