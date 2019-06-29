@@ -54,9 +54,9 @@ class HyperParam:
 
 # %%
 def train(hp):
-  random.seed(0)
-  np.random.seed(0)
-  torch.manual_seed(0)
+  random.seed(1234)
+  np.random.seed(2345)
+  torch.manual_seed(4567)
 
   time_start = time.time()
   run_id = time.strftime('%b%d_%H-%M-%S_%z', time.localtime(time_start))
