@@ -2,15 +2,30 @@ import collections
 import random
 import numpy as np
 import priorityq
+from typing import List
+
 
 Experience = collections.namedtuple(
   'Experience',
   field_names=['state', 'action', 'reward', 'next_state', 'done'])
 
 
+def unzip(xss):
+  if len(xss) == 0:
+    raise ValueError(f'Cannot unzip an empty list')
+  else:
+    tuple_size = len(xss[0])
+    result = tuple([[] for _ in range(tuple_size)])
+    for xs in xss:
+      for i in range(tuple_size):
+        result[i].append(xs[i])
+    return result
+
+
 class Batch:
-  def __init__(self, experiences):
-    self.states, self.actions, self.rewards, self.next_states, self.dones = zip(*experiences)
+  def __init__(self, experiences: List[Experience]):
+    # [(s, a, r, s, d)]
+    self.states, self.actions, self.rewards, self.next_states, self.dones = unzip(experiences)
     self.states = np.array(self.states).astype(np.float32)
     self.actions = np.array(self.actions).astype(np.float32)
     self.rewards = np.array(self.rewards).astype(np.float32)
