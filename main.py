@@ -42,6 +42,7 @@ NUM_STACKS = 3
 @dataclasses.dataclass
 class HyperParam:
   memory_max_size: int
+  start_learning_memory_size: int
   num_episodes: int
   batch_size: int
   gamma: float
@@ -147,7 +148,8 @@ HP = HyperParam(
   actor_local_lr=1e-2,
   update_target_every=1,
   learn_every_new_samples=100,
-  soft_update_tau=1e-2)
+  soft_update_tau=1e-2,
+  start_learning_memory_size=2048)
 
 if __name__ == '__main__':
   train(hp=HP)

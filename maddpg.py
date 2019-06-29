@@ -131,7 +131,8 @@ class Agent:
       state=states, action=actions, reward=rewards, next_state=next_states, done=dones)
     self._memory.put(experience)
 
-    if len(self._memory) >= self._hp.batch_size and self._experiences_seen % self._hp.learn_every_new_samples == 0:
+    if (len(self._memory) >= max(self._hp.batch_size, self._hp.start_learning_memory_size)
+      and self._experiences_seen % self._hp.learn_every_new_samples == 0):
       self._learn()
 
   def _learn(self):
