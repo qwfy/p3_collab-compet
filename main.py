@@ -51,6 +51,7 @@ class HyperParam:
   update_target_every: int
   learn_every_new_samples: int
   soft_update_tau: float
+  save_interval: int
 
 
 # %%
@@ -90,6 +91,8 @@ def train(hp):
 
   window_rewards = collections.deque(maxlen=SOLVE_NUM_EPISODES)
 
+  last_save_episode = None
+
   for i_episode in range(hp.num_episodes):
     states = env.reset(train_mode=True)[BRAIN_NAME].vector_observations
 
@@ -123,7 +126,12 @@ def train(hp):
     mean_reward = np.mean(window_rewards)
     writer.add_scalar(f'episode_reward_agent_max_avg_over_{SOLVE_NUM_EPISODES}_episodes', mean_reward, i_episode)
 
-    if len(window_rewards) >= SOLVE_NUM_EPISODES and mean_reward >= SOLVE_REWARD:
+    if (len(window_rewards) >= SOLVE_NUM_EPISODES
+      and mean_reward >= SOLVE_REWARD
+      and (last_save_episode is None
+           or i_episode - last_save_episode >= hp.save_interval)):
+
+      last_save_episode = i_episode
       save_dir = os.path.join('run/model', f'{run_id}_{i_episode}')
       os.makedirs(save_dir, exist_ok=True)
       agent.save(save_dir)
@@ -149,7 +157,8 @@ HP = HyperParam(
   update_target_every=5,
   learn_every_new_samples=128,
   soft_update_tau=1e-3,
-  start_learning_memory_size=2048)
+  start_learning_memory_size=2048,
+  save_interval=100)
 
 if __name__ == '__main__':
   train(hp=HP)
