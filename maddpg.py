@@ -218,9 +218,9 @@ class Agent:
   def _copy_weights(self, i_agent):
     with torch.no_grad():
       for l, t in zip(self._critics_local[i_agent].parameters(), self._critics_target[i_agent].parameters()):
-        t.data = l.data
+        t.data.copy_(l.data)
       for l, t in zip(self._actors_local[i_agent].parameters(), self._actors_target[i_agent].parameters()):
-        t.data = l.data
+        t.data.copy_(l.data)
 
   def _save_one(self, directory, i_agent):
     torch.save(self._actors_local[i_agent].state_dict(), os.path.join(directory, f'actor_local_{i_agent}.pt'))
