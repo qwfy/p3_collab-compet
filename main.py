@@ -142,13 +142,13 @@ def train(hp):
 HP = HyperParam(
   memory_max_size=int(1e6),
   num_episodes=25000,
-  batch_size=1024,
+  batch_size=64,
   gamma=0.95,
-  critic_local_lr=1e-2,
-  actor_local_lr=1e-2,
-  update_target_every=1,
-  learn_every_new_samples=100,
-  soft_update_tau=1e-2,
+  critic_local_lr=1e-4,
+  actor_local_lr=1e-4,
+  update_target_every=5,
+  learn_every_new_samples=128,
+  soft_update_tau=1e-3,
   start_learning_memory_size=2048)
 
 if __name__ == '__main__':
