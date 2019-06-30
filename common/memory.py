@@ -72,7 +72,7 @@ class RankPrioritized:
     pas = np.power(ps, alpha)
     Ps = pas / np.sum(pas)
 
-    return random.choices(self._q.h, weights=Ps)
+    return random.choices(self._q.h, weights=Ps, k=n)
 
   def put(self, scored):
     if scored.score is None:
