@@ -16,6 +16,7 @@ os.makedirs('run/model', exist_ok=True)
 os.makedirs('run/summary', exist_ok=True)
 os.makedirs('run/log', exist_ok=True)
 
+import argparse
 import time
 from unityagents import UnityEnvironment
 import maddpg
@@ -30,7 +31,6 @@ import torch
 
 
 # %%
-SIMULATOR_PATH = 'Tennis_Linux/Tennis.x86_64'
 BRAIN_NAME = 'TennisBrain'
 NUM_HOMOGENEOUS_AGENTS = 2
 SOLVE_NUM_EPISODES = 100
@@ -55,7 +55,7 @@ class HyperParam:
 
 
 # %%
-def train(hp):
+def train(hp, cli_args):
   random.seed(1234)
   np.random.seed(2345)
   torch.manual_seed(4567)
@@ -77,7 +77,7 @@ def train(hp):
   writer = tensorboardX.SummaryWriter(os.path.join('run/summary', run_id))
   pbar = tqdm.tqdm(total=hp.num_episodes)
 
-  env = UnityEnvironment(file_name=SIMULATOR_PATH)
+  env = UnityEnvironment(file_name=cli_args.simulator)
   state_length = env.brains[BRAIN_NAME].vector_observation_space_size
   action_length = env.brains[BRAIN_NAME].vector_action_space_size
 
@@ -166,4 +166,7 @@ HP = HyperParam(
   save_interval=100)
 
 if __name__ == '__main__':
-  train(hp=HP)
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--simulator', type=str, default='Tennis_Linux/Tennis.x86_64')
+  args = parser.parse_args()
+  train(hp=HP, cli_args=args)
