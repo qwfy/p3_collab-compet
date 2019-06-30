@@ -199,6 +199,8 @@ class Agent:
       critic_loss = F.mse_loss(qs_l, qs_t)
       critic_loss.backward()
       self._critic_local_optimizers[i_agent].step()
+
+      self._writer.add_scaler(f'critic_loss_agent_{i_agent}', critic_loss.item(), self._times_learned)
     f()
 
     def f():
@@ -213,6 +215,8 @@ class Agent:
       policy_loss = -qs_l.mean()
       policy_loss.backward()
       self._actor_local_optimizers[i_agent].step()
+
+      self._writer.add_scaler(f'actor_loss_agent_{i_agent}', policy_loss.item(), self._times_learned)
     f()
 
   def _soft_update(self, i_agent):
