@@ -111,6 +111,7 @@ class Agent:
 
     self._times_learned = 0
     self._experiences_seen = 0
+    self._learning_start_reported = False
 
 
   def act(self, states):
@@ -124,7 +125,7 @@ class Agent:
         actions[i] = actions_i.cpu().numpy().squeeze(0)
     return actions
 
-  def step(self, states, actions, rewards, next_states, dones):
+  def step(self, states, actions, rewards, next_states, dones, i_episode):
     self._experiences_seen += 1
 
     experience = common.memory.Experience(
@@ -133,6 +134,9 @@ class Agent:
 
     if (len(self._memory) >= max(self._hp.batch_size, self._hp.start_learning_memory_size)
       and self._experiences_seen % self._hp.learn_every_new_samples == 0):
+      if not self._learning_start_reported:
+        logger.info('learning started at episode: %s', i_episode)
+        self._learning_start_reported = True
       self._learn()
 
   def _learn(self):

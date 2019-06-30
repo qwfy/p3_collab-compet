@@ -109,7 +109,7 @@ def train(hp):
       rewards = env_info.rewards
       dones = env_info.local_done
 
-      agent.step(states, actions, rewards, next_states, dones)
+      agent.step(states, actions, rewards, next_states, dones, i_episode)
       episode_rewards += rewards
 
       if any(dones):
