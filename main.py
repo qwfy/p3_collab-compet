@@ -77,7 +77,7 @@ def train(hp, cli_args):
   writer = tensorboardX.SummaryWriter(os.path.join('run/summary', run_id))
   pbar = tqdm.tqdm(total=hp.num_episodes)
 
-  env = UnityEnvironment(file_name=cli_args.simulator)
+  env = UnityEnvironment(file_name=cli_args.simulator, worker_id=cli_args.unity_worker_id)
   state_length = env.brains[BRAIN_NAME].vector_observation_space_size
   action_length = env.brains[BRAIN_NAME].vector_action_space_size
 
@@ -168,5 +168,6 @@ HP = HyperParam(
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--simulator', type=str, default='Tennis_Linux/Tennis.x86_64')
+  parser.add_argument('--unity_worker_id', type=int, default=0)
   args = parser.parse_args()
   train(hp=HP, cli_args=args)
