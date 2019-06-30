@@ -99,7 +99,10 @@ def train(hp):
     # this records the episode reward for each agent
     episode_rewards = np.zeros(NUM_HOMOGENEOUS_AGENTS)
 
+    episode_length = 0
+
     while True:
+      episode_length += 1
       actions = agent.act(states)
       env_info = env.step(actions)[BRAIN_NAME]
       next_states = env_info.vector_observations
@@ -115,6 +118,8 @@ def train(hp):
         states = next_states
 
     pbar.update(1)
+
+    writer.add_scalar('episode_length', episode_length, i_episode)
 
     # the episode reward is defined to be the maximum of all agents
     episode_reward = np.max(episode_rewards)
