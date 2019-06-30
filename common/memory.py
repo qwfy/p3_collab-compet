@@ -44,6 +44,10 @@ class ScoredExperience:
   def __gt__(self, other):
     return self.score > other.score
 
+class ScoredBatch(Batch):
+  def __init__(self, scored_experiences: List[ScoredExperience]):
+    super().__init__([scored.experience for scored in scored_experiences])
+    self.scored_experiences = scored_experiences
 
 class Uniform:
 
@@ -72,7 +76,7 @@ class RankPrioritized:
     pas = np.power(ps, alpha)
     Ps = pas / np.sum(pas)
 
-    return random.choices(self._q.h, weights=Ps, k=n)
+    return ScoredBatch(random.choices(self._q.h, weights=Ps, k=n))
 
   def put(self, scored):
     if scored.score is None:

@@ -112,7 +112,7 @@ class Agent:
     logger.info(f'architecture of the actor: %s', self._actors_local[0])
     logger.info(f'architecture of the critic: %s', self._critics_local[0])
 
-    self._memory = common.memory.Uniform(max_size=hp.memory_max_size)
+    self._memory = common.memory.RankPrioritized(max_size=hp.memory_max_size)
 
     self._times_learned = 0
     self._experiences_seen = 0
@@ -135,16 +135,19 @@ class Agent:
 
     experience = common.memory.Experience(
       state=states, action=actions, reward=rewards, next_state=next_states, done=dones)
-    self._memory.put(experience)
+    scored = common.memory.ScoredExperience(
+      score=None,
+      experience=experience)
+    self._memory.put(scored)
 
     if (len(self._memory) >= max(self._hp.batch_size, self._hp.start_learning_memory_size)
       and self._experiences_seen % self._hp.learn_every_new_samples == 0):
       if not self._learning_start_reported:
         logger.info('learning started at episode: %s', i_episode)
         self._learning_start_reported = True
-      self._learn()
+      self._learn(i_episode)
 
-  def _learn(self):
+  def _learn(self, i_episode):
     self._times_learned += 1
 
     self._map(lambda i: self._actors_local[i].train())
@@ -157,14 +160,15 @@ class Agent:
       self._map(lambda i: self._actors_target[i].sample_epsilon())
 
     for i_agent in range(self._num_homogeneous_agents):
-      self._learn_one_agent(i_agent)
+      self._learn_one_agent(i_agent=i_agent, i_episode=i_episode)
 
     if self._times_learned % self._hp.update_target_every_learnings == 0:
       self._map(self._soft_update)
 
 
-  def _learn_one_agent(self, i_agent):
-    batch = self._memory.sample(n=self._hp.batch_size)
+  def _learn_one_agent(self, i_agent, i_episode):
+    alpha = (1 - i_episode / self._hp.num_episodes) * self._hp.memory_initial_alpha
+    batch = self._memory.sample(n=self._hp.batch_size, alpha=alpha)
     batch.states = torch.from_numpy(batch.states).cuda()
     batch.actions = torch.from_numpy(batch.actions).cuda()
     batch.rewards = torch.from_numpy(batch.rewards).cuda()
@@ -200,6 +204,13 @@ class Agent:
       critic_loss = F.mse_loss(qs_l, qs_t)
       critic_loss.backward()
       self._critic_local_optimizers[i_agent].step()
+
+      with torch.no_grad():
+        td_errors = torch.abs(qs_l - qs_t).cpu().numpy()
+
+      for scored, new_score in zip(batch.scored_experiences, td_errors):
+        scored.score = new_score
+        self._memory.put(scored)
 
       self._writer.add_scalar(f'critic_loss_agent_{i_agent}', critic_loss.item(), self._times_learned)
     f()
