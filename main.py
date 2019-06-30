@@ -169,7 +169,7 @@ HP = HyperParam(
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('--simulator', type=str, default='Tennis_Linux/Tennis.x86_64')
+  parser.add_argument('--simulator', type=str, default='Tennis_Linux_NoVis/Tennis.x86_64')
   parser.add_argument('--unity_worker_id', type=int, default=0)
   args = parser.parse_args()
   train(hp=HP, cli_args=args)
