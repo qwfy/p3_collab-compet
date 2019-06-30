@@ -10,6 +10,7 @@ import functools
 
 logger = logging.getLogger(__name__)
 
+FC_SIZE = 128
 
 def weight_range(layer):
   in_features = layer.weight.data.size()[0]
@@ -21,13 +22,13 @@ class Actor(nn.Module):
 
   def __init__(self, state_length, action_length):
     nn.Module.__init__(self)
-    self.fc1 = nn.Linear(in_features=state_length, out_features=64)
-    self.bn1 = nn.BatchNorm1d(num_features=64)
-    self.fc2 = nn.Linear(in_features=64, out_features=64)
-    self.bn2 = nn.BatchNorm1d(num_features=64)
-    self.fc3 = common.noisy_linear.NoisyLinear(in_features=64, out_features=64)
-    self.bn3 = nn.BatchNorm1d(num_features=64)
-    self.fc4 = common.noisy_linear.NoisyLinear(in_features=64, out_features=action_length)
+    self.fc1 = nn.Linear(in_features=state_length, out_features=FC_SIZE)
+    self.bn1 = nn.BatchNorm1d(num_features=FC_SIZE)
+    self.fc2 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
+    self.bn2 = nn.BatchNorm1d(num_features=FC_SIZE)
+    self.fc3 = common.noisy_linear.NoisyLinear(in_features=FC_SIZE, out_features=FC_SIZE)
+    self.bn3 = nn.BatchNorm1d(num_features=FC_SIZE)
+    self.fc4 = common.noisy_linear.NoisyLinear(in_features=FC_SIZE, out_features=action_length)
     self._init_weights()
 
   def forward(self, states):
@@ -52,13 +53,13 @@ class Critic(nn.Module):
 
   def __init__(self, state_length, action_length):
     nn.Module.__init__(self)
-    self.fc1 = nn.Linear(in_features=state_length, out_features=64)
-    self.bn1 = nn.BatchNorm1d(num_features=64)
-    self.fc2 = nn.Linear(in_features=64+action_length, out_features=64)
-    self.bn2 = nn.BatchNorm1d(num_features=64)
-    self.fc3 = nn.Linear(in_features=64, out_features=64)
-    self.bn3 = nn.BatchNorm1d(num_features=64)
-    self.fc4 = nn.Linear(in_features=64, out_features=1)
+    self.fc1 = nn.Linear(in_features=state_length, out_features=FC_SIZE)
+    self.bn1 = nn.BatchNorm1d(num_features=FC_SIZE)
+    self.fc2 = nn.Linear(in_features=FC_SIZE+action_length, out_features=FC_SIZE)
+    self.bn2 = nn.BatchNorm1d(num_features=FC_SIZE)
+    self.fc3 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
+    self.bn3 = nn.BatchNorm1d(num_features=FC_SIZE)
+    self.fc4 = nn.Linear(in_features=FC_SIZE, out_features=1)
     self._init_weights()
 
   def forward(self, states, actions):
