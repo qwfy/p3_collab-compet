@@ -24,15 +24,17 @@ class Actor(nn.Module):
     self.fc1 = nn.Linear(in_features=state_length, out_features=64)
     self.bn1 = nn.BatchNorm1d(num_features=64)
     self.fc2 = nn.Linear(in_features=64, out_features=64)
+    self.bn2 = nn.BatchNorm1d(num_features=64)
     self.fc3 = common.noisy_linear.NoisyLinear(in_features=64, out_features=64)
+    self.bn3 = nn.BatchNorm1d(num_features=64)
     self.fc4 = common.noisy_linear.NoisyLinear(in_features=64, out_features=action_length)
     self._init_weights()
 
   def forward(self, states):
     x = states
     x = F.relu(self.bn1(self.fc1(x)))
-    x = F.relu(self.fc2(x))
-    x = F.relu(self.fc3(x))
+    x = F.relu(self.bn2(self.fc2(x)))
+    x = F.relu(self.bn3(self.fc3(x)))
     x = F.tanh(self.fc4(x))
     return x
 
@@ -53,15 +55,17 @@ class Critic(nn.Module):
     self.fc1 = nn.Linear(in_features=state_length, out_features=64)
     self.bn1 = nn.BatchNorm1d(num_features=64)
     self.fc2 = nn.Linear(in_features=64+action_length, out_features=64)
+    self.bn2 = nn.BatchNorm1d(num_features=64)
     self.fc3 = nn.Linear(in_features=64, out_features=64)
+    self.bn3 = nn.BatchNorm1d(num_features=64)
     self.fc4 = nn.Linear(in_features=64, out_features=1)
     self._init_weights()
 
   def forward(self, states, actions):
     states = F.relu(self.bn1(self.fc1(states)))
     x = torch.cat([states, actions], dim=1)
-    x = F.relu(self.fc2(x))
-    x = F.relu(self.fc3(x))
+    x = F.relu(self.bn2(self.fc2(x)))
+    x = F.relu(self.bn3(self.fc3(x)))
     x = self.fc4(x)
     return x
 
