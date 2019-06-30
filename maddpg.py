@@ -154,7 +154,7 @@ class Agent:
     for i_agent in range(self._num_homogeneous_agents):
       self._learn_one_agent(i_agent)
 
-    if self._times_learned % self._hp.update_target_every == 0:
+    if self._times_learned % self._hp.update_target_every_learnings == 0:
       self._map(self._soft_update)
 
 

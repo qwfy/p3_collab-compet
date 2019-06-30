@@ -48,7 +48,7 @@ class HyperParam:
   gamma: float
   critic_local_lr: float
   actor_local_lr: float
-  update_target_every: int
+  update_target_every_learnings: int
   learn_every_new_samples: int
   soft_update_tau: float
   save_interval: int
@@ -159,7 +159,7 @@ HP = HyperParam(
   gamma=0.95,
   critic_local_lr=1e-4,
   actor_local_lr=1e-4,
-  update_target_every=10,
+  update_target_every_learnings=10,
   learn_every_new_samples=128,
   soft_update_tau=1e-3,
   start_learning_memory_size=2048,
