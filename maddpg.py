@@ -10,7 +10,7 @@ import functools
 
 logger = logging.getLogger(__name__)
 
-FC_SIZE = 128
+FC_SIZE = 64
 
 def weight_range(layer):
   in_features = layer.weight.data.size()[0]
