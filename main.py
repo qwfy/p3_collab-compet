@@ -53,6 +53,7 @@ class HyperParam:
   learn_every_new_samples: int
   soft_update_tau: float
   save_interval: int
+  num_sub_policies: int
 
 
 # %%
@@ -101,6 +102,8 @@ def train(hp, cli_args):
     episode_rewards = np.zeros(NUM_HOMOGENEOUS_AGENTS)
 
     episode_length = 0
+
+    agent.choose_sub_policy()
 
     while True:
       episode_length += 1
@@ -165,7 +168,8 @@ HP = HyperParam(
   learn_every_new_samples=128,
   soft_update_tau=1e-3,
   start_learning_memory_size=10240,
-  save_interval=100)
+  save_interval=100,
+  num_sub_policies=3)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
