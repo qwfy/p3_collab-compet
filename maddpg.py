@@ -7,7 +7,6 @@ import common
 import logging
 import os
 import functools
-import random
 
 logger = logging.getLogger(__name__)
 
@@ -90,13 +89,11 @@ class Agent:
     flatten_state_length = self._state_length * self._num_homogeneous_agents
     flatten_action_length = self._action_length * self._num_homogeneous_agents
 
-    self._actors_local = [self._map(
+    self._actors_local = self._map(
       lambda _: Actor(state_length=self._state_length, action_length=self._action_length).cuda())
-      for _ in range(self._hp.num_sub_policies)]
 
-    self._actors_target = [self._map(
+    self._actors_target = self._map(
       lambda _: Actor(state_length=self._state_length, action_length=self._action_length).cuda())
-      for _ in range(self._hp.num_sub_policies)]
 
     self._critics_local = self._map(
       lambda _: Critic(state_length=flatten_state_length, action_length=flatten_action_length).cuda())
@@ -107,24 +104,19 @@ class Agent:
     self._critic_local_optimizers = self._map(
       lambda i: optim.Adam(params=self._critics_local[i].parameters(), lr=self._hp.critic_local_lr))
 
-    self._actor_local_optimizers = [self._map(
-      lambda i: optim.Adam(params=self._actors_local[sub_policy][i].parameters(), lr=self._hp.actor_local_lr))
-      for sub_policy in range(self._hp.num_sub_policies)]
+    self._actor_local_optimizers = self._map(
+      lambda i: optim.Adam(params=self._actors_local[i].parameters(), lr=self._hp.actor_local_lr))
 
     self._map(self._copy_weights)
 
-    logger.info(f'architecture of the actor: %s', self._actors_local[0][0])
+    logger.info(f'architecture of the actor: %s', self._actors_local[0])
     logger.info(f'architecture of the critic: %s', self._critics_local[0])
 
-    self._memory = [
-      common.memory.RankPrioritized(max_size=hp.memory_max_size)
-      for _ in range(self._hp.num_sub_policies)]
+    self._memory = common.memory.RankPrioritized(max_size=hp.memory_max_size)
 
     self._times_learned = 0
     self._experiences_seen = 0
     self._learning_start_reported = False
-
-    self._sub_policy = None
 
 
   def act(self, states):
@@ -132,9 +124,9 @@ class Agent:
     actions = np.zeros((self._num_homogeneous_agents, self._action_length))
     with torch.no_grad():
       for i in range(self._num_homogeneous_agents):
-        self._actors_local[self._sub_policy][i].eval()
-        self._actors_local[self._sub_policy][i].sample_epsilon()
-        actions_i = self._actors_local[self._sub_policy][i](states[i].unsqueeze(0))
+        self._actors_local[i].eval()
+        self._actors_local[i].sample_epsilon()
+        actions_i = self._actors_local[i](states[i].unsqueeze(0))
         actions[i] = actions_i.cpu().numpy().squeeze(0)
     return actions
 
@@ -146,9 +138,9 @@ class Agent:
     scored = common.memory.ScoredExperience(
       score=None,
       experience=experience)
-    self._memory[self._sub_policy].put(scored)
+    self._memory.put(scored)
 
-    if (len(self._memory[self._sub_policy]) >= max(self._hp.batch_size, self._hp.start_learning_memory_size)
+    if (len(self._memory) >= max(self._hp.batch_size, self._hp.start_learning_memory_size)
       and self._experiences_seen % self._hp.learn_every_new_samples == 0):
       if not self._learning_start_reported:
         logger.info('learning started at episode: %s', i_episode)
@@ -158,14 +150,14 @@ class Agent:
   def _learn(self, i_episode):
     self._times_learned += 1
 
-    self._map(lambda i: self._actors_local[self._sub_policy][i].train())
-    self._map(lambda i: self._actors_target[self._sub_policy][i].train())
+    self._map(lambda i: self._actors_local[i].train())
+    self._map(lambda i: self._actors_target[i].train())
     self._map(lambda i: self._critics_local[i].train())
     self._map(lambda i: self._critics_target[i].train())
 
     with torch.no_grad():
-      self._map(lambda i: self._actors_local[self._sub_policy][i].sample_epsilon())
-      self._map(lambda i: self._actors_target[self._sub_policy][i].sample_epsilon())
+      self._map(lambda i: self._actors_local[i].sample_epsilon())
+      self._map(lambda i: self._actors_target[i].sample_epsilon())
 
     for i_agent in range(self._num_homogeneous_agents):
       self._learn_one_agent(i_agent=i_agent, i_episode=i_episode)
@@ -176,7 +168,7 @@ class Agent:
 
   def _learn_one_agent(self, i_agent, i_episode):
     alpha = (1 - i_episode / self._hp.num_episodes) * self._hp.memory_initial_alpha
-    batch = self._memory[self._sub_policy].sample(n=self._hp.batch_size, alpha=alpha)
+    batch = self._memory.sample(n=self._hp.batch_size, alpha=alpha)
     batch.states = torch.from_numpy(batch.states).cuda()
     batch.actions = torch.from_numpy(batch.actions).cuda()
     batch.rewards = torch.from_numpy(batch.rewards).cuda()
@@ -184,7 +176,7 @@ class Agent:
     batch.dones = torch.from_numpy(batch.dones).cuda()
 
     def f():
-      self._map(lambda i: self._actors_local[self._sub_policy][i].zero_grad())
+      self._map(lambda i: self._actors_local[i].zero_grad())
       self._map(lambda i: self._critics_local[i].zero_grad())
 
       # calculate the target Q value
@@ -194,7 +186,7 @@ class Agent:
         # action of this particular agent on the batch_size next_state,
         # thus the shape should be (batch_size, action_length) (for each agent),
         # and the overall shape should be (batch_size, action_length * num_agents)
-        next_as_t = self._map(lambda i: self._actors_target[self._sub_policy][i](batch.next_states[:, i]))
+        next_as_t = self._map(lambda i: self._actors_target[i](batch.next_states[:, i]))
         next_as_t = torch.cat(next_as_t, dim=1)
 
         # the i_agent's critic receives all observations, and all actions
@@ -218,23 +210,23 @@ class Agent:
 
       for scored, new_score in zip(batch.scored_experiences, td_errors):
         scored.score = new_score
-        self._memory[self._sub_policy].put(scored)
+        self._memory.put(scored)
 
       self._writer.add_scalar(f'critic_loss_agent_{i_agent}', critic_loss.item(), self._times_learned)
     f()
 
     def f():
-      self._map(lambda i: self._actors_local[self._sub_policy][i].zero_grad())
+      self._map(lambda i: self._actors_local[i].zero_grad())
       self._map(lambda i: self._critics_local[i].zero_grad())
 
       # train the local actor
-      as_l = self._map(lambda i: self._actors_local[self._sub_policy][i](batch.states[:, i]))
+      as_l = self._map(lambda i: self._actors_local[i](batch.states[:, i]))
       as_l = torch.cat(as_l, dim=1)
       qs_l = self._critics_local[i_agent](self._view_agents_flat(batch.states), as_l)
 
       policy_loss = -qs_l.mean()
       policy_loss.backward()
-      self._actor_local_optimizers[self._sub_policy][i_agent].step()
+      self._actor_local_optimizers[i_agent].step()
 
       self._writer.add_scalar(f'actor_loss_agent_{i_agent}', policy_loss.item(), self._times_learned)
     f()
@@ -245,7 +237,7 @@ class Agent:
       for l, t in zip(self._critics_local[i_agent].parameters(), self._critics_target[i_agent].parameters()):
         new_t = tau * l.data + (1 - tau) * t.data
         t.data = new_t
-      for l, t in zip(self._actors_local[self._sub_policy][i_agent].parameters(), self._actors_target[self._sub_policy][i_agent].parameters()):
+      for l, t in zip(self._actors_local[i_agent].parameters(), self._actors_target[i_agent].parameters()):
         new_t = tau * l.data + (1 - tau) * t.data
         t.data = new_t
 
@@ -254,14 +246,12 @@ class Agent:
     with torch.no_grad():
       for l, t in zip(self._critics_local[i_agent].parameters(), self._critics_target[i_agent].parameters()):
         t.data.copy_(l.data)
-      for sub_policy in range(self._hp.num_sub_policies):
-        for l, t in zip(self._actors_local[sub_policy][i_agent].parameters(), self._actors_target[sub_policy][i_agent].parameters()):
-          t.data.copy_(l.data)
+      for l, t in zip(self._actors_local[i_agent].parameters(), self._actors_target[i_agent].parameters()):
+        t.data.copy_(l.data)
 
   def _save_one(self, directory, i_agent):
-    for sub_policy in range(self._hp.num_sub_policies):
-      torch.save(self._actors_local[i_agent].state_dict(), os.path.join(directory, f'actor_local_{i_agent}_{sub_policy}.pt'))
-      torch.save(self._actors_target[i_agent].state_dict(), os.path.join(directory, f'actor_target_{i_agent}_{sub_policy}.pt'))
+    torch.save(self._actors_local[i_agent].state_dict(), os.path.join(directory, f'actor_local_{i_agent}.pt'))
+    torch.save(self._actors_target[i_agent].state_dict(), os.path.join(directory, f'actor_target_{i_agent}.pt'))
     torch.save(self._critics_local[i_agent].state_dict(), os.path.join(directory, f'critic_local_{i_agent}.pt'))
     torch.save(self._critics_target[i_agent].state_dict(), os.path.join(directory, f'critic_target_{i_agent}.pt'))
 
@@ -274,6 +264,3 @@ class Agent:
   @staticmethod
   def _view_agents_flat(x):
     return x.view(x.shape[0], -1)
-
-  def choose_sub_policy(self):
-    self._sub_policy = random.randint(0, self._hp.num_sub_policies - 1)
