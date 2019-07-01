@@ -35,7 +35,7 @@ BRAIN_NAME = 'TennisBrain'
 NUM_HOMOGENEOUS_AGENTS = 2
 SOLVE_NUM_EPISODES = 100
 SOLVE_REWARD = 0.5
-NUM_STACKS = 1
+NUM_STACKS = 3
 
 
 # %%
@@ -104,13 +104,13 @@ def train(hp, cli_args):
 
     while True:
       episode_length += 1
-      actions = agent.act(states[:, :state_length])
+      actions = agent.act(states)
       env_info = env.step(actions)[BRAIN_NAME]
       next_states = env_info.vector_observations
       rewards = env_info.rewards
       dones = env_info.local_done
 
-      agent.step(states[:, :state_length], actions, rewards, next_states[:, :state_length], dones, i_episode)
+      agent.step(states, actions, rewards, next_states, dones, i_episode)
       episode_rewards += rewards
 
       if any(dones):
