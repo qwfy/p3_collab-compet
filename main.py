@@ -102,6 +102,8 @@ def train(hp, cli_args):
 
     episode_length = 0
 
+    agent.noise.reset()
+
     while True:
       episode_length += 1
       actions = agent.act(states)

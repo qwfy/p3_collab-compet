@@ -26,9 +26,9 @@ class Actor(nn.Module):
     self.bn1 = nn.BatchNorm1d(num_features=FC_SIZE)
     self.fc2 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
     self.bn2 = nn.BatchNorm1d(num_features=FC_SIZE)
-    self.fc3 = common.noisy_linear.NoisyLinear(in_features=FC_SIZE, out_features=FC_SIZE)
+    self.fc3 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
     self.bn3 = nn.BatchNorm1d(num_features=FC_SIZE)
-    self.fc4 = common.noisy_linear.NoisyLinear(in_features=FC_SIZE, out_features=action_length)
+    self.fc4 = nn.Linear(in_features=FC_SIZE, out_features=action_length)
     self._init_weights()
 
   def forward(self, states):
@@ -39,14 +39,11 @@ class Actor(nn.Module):
     x = F.tanh(self.fc4(x))
     return x
 
-  def sample_epsilon(self):
-    with torch.no_grad():
-      for x in [self.fc3, self.fc4]:
-        x.sample_epsilon()
-
   def _init_weights(self):
     self.fc1.weight.data.uniform_(*weight_range(self.fc1))
     self.fc2.weight.data.uniform_(*weight_range(self.fc2))
+    self.fc3.weight.data.uniform_(*weight_range(self.fc3))
+    self.fc4.weight.data.uniform_(-3e-3, 3e-3)
 
 
 class Critic(nn.Module):
@@ -114,6 +111,8 @@ class Agent:
 
     self._memory = common.memory.RankPrioritized(max_size=hp.memory_max_size)
 
+    self.noise = common.noise.OUNoise(action_dimension=(self._num_homogeneous_agents, self._action_length))
+
     self._times_learned = 0
     self._experiences_seen = 0
     self._learning_start_reported = False
@@ -125,10 +124,9 @@ class Agent:
     with torch.no_grad():
       for i in range(self._num_homogeneous_agents):
         self._actors_local[i].eval()
-        self._actors_local[i].sample_epsilon()
         actions_i = self._actors_local[i](states[i].unsqueeze(0))
         actions[i] = actions_i.cpu().numpy().squeeze(0)
-    return actions
+    return actions + self.noise.sample()
 
   def step(self, states, actions, rewards, next_states, dones, i_episode):
     self._experiences_seen += 1
@@ -154,10 +152,6 @@ class Agent:
     self._map(lambda i: self._actors_target[i].train())
     self._map(lambda i: self._critics_local[i].train())
     self._map(lambda i: self._critics_target[i].train())
-
-    with torch.no_grad():
-      self._map(lambda i: self._actors_local[i].sample_epsilon())
-      self._map(lambda i: self._actors_target[i].sample_epsilon())
 
     for i_agent in range(self._num_homogeneous_agents):
       self._learn_one_agent(i_agent=i_agent, i_episode=i_episode)

@@ -1,19 +1,23 @@
 import numpy as np
 
-class OrnsteinUhlenbeck:
 
-  def __init__(self, shape, theta, sigma):
-    self._shape = shape
-    self._theta = theta
-    self._sigma = sigma
+# from https://github.com/songrotek/DDPG/blob/master/ou_noise.py
+class OUNoise:
 
-    self._x = None
+  def __init__(self, action_dimension, scale=0.1, mu=0, theta=0.15, sigma=0.2):
+    self.action_dimension = action_dimension
+    self.scale = scale
+    self.mu = mu
+    self.theta = theta
+    self.sigma = sigma
+    self.state = np.ones(self.action_dimension) * self.mu
     self.reset()
 
-  def sample(self):
-    dx = - self._theta * self._x + self._sigma * np.random.random(size=self._shape)
-    self._x += dx
-    return self._x
-
   def reset(self):
-    self._x = np.zeros(self._shape)
+    self.state = np.ones(self.action_dimension) * self.mu
+
+  def sample(self):
+    x = self.state
+    dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
+    self.state = x + dx
+    return self.state * self.scale
