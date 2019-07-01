@@ -99,7 +99,7 @@ class Agent:
       lambda _: Critic(state_length=flatten_state_length, action_length=flatten_action_length).cuda())
 
     self._critic_local_optimizers = self._map(
-      lambda i: optim.Adam(params=self._critics_local[i].parameters(), lr=self._hp.critic_local_lr))
+      lambda i: optim.Adam(params=self._critics_local[i].parameters(), lr=self._hp.critic_local_lr, weight_decay=1e-5))
 
     self._actor_local_optimizers = self._map(
       lambda i: optim.Adam(params=self._actors_local[i].parameters(), lr=self._hp.actor_local_lr))
@@ -195,7 +195,7 @@ class Agent:
         self._view_agents_flat(batch.states),
         self._view_agents_flat(batch.actions))
       qs_l = qs_l.squeeze(dim=1)
-      critic_loss = F.mse_loss(qs_l, qs_t)
+      critic_loss = F.smooth_l1_loss(qs_l, qs_t)
       critic_loss.backward()
       self._critic_local_optimizers[i_agent].step()
 
