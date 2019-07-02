@@ -51,6 +51,7 @@ class HyperParam:
   actor_local_lr: float
   update_target_every_learnings: int
   learn_every_new_samples: int
+  passes_every_learn: int
   soft_update_tau: float
   save_interval: int
 
@@ -165,8 +166,9 @@ HP = HyperParam(
   actor_local_lr=1e-3,
   update_target_every_learnings=5,
   learn_every_new_samples=128,
+  passes_every_learn=3,
   soft_update_tau=1e-3,
-  start_learning_memory_size=10240,
+  start_learning_memory_size=5120,
   save_interval=100)
 
 if __name__ == '__main__':

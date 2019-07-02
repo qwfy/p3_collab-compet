@@ -154,7 +154,8 @@ class Agent:
     self._map(lambda i: self._critics_target[i].train())
 
     for i_agent in range(self._num_homogeneous_agents):
-      self._learn_one_agent(i_agent=i_agent, i_episode=i_episode)
+      for _ in range(self._hp.passes_every_learn):
+        self._learn_one_agent(i_agent=i_agent, i_episode=i_episode)
 
     if self._times_learned % self._hp.update_target_every_learnings == 0:
       self._map(self._soft_update)
