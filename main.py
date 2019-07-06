@@ -54,6 +54,8 @@ class HyperParam:
   passes_every_learn: int
   soft_update_tau: float
   save_interval: int
+  initial_noise: float
+  noise_decay: float
 
 
 # %%
@@ -95,6 +97,8 @@ def train(hp, cli_args):
 
   last_save_episode = None
 
+  current_noise = hp.initial_noise
+
   for i_episode in range(hp.num_episodes):
     states = env.reset(train_mode=True)[BRAIN_NAME].vector_observations
 
@@ -106,8 +110,9 @@ def train(hp, cli_args):
     agent.noise.reset()
 
     while True:
+      current_noise *= hp.noise_decay
       episode_length += 1
-      actions = agent.act(states)
+      actions = agent.act(states, noise=current_noise)
       env_info = env.step(actions)[BRAIN_NAME]
       next_states = env_info.vector_observations
       rewards = env_info.rewards
@@ -169,7 +174,9 @@ HP = HyperParam(
   passes_every_learn=5,
   soft_update_tau=1e-3,
   start_learning_memory_size=5120,
-  save_interval=100)
+  save_interval=100,
+  initial_noise=2,
+  noise_decay=0.9999)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()

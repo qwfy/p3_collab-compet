@@ -118,7 +118,7 @@ class Agent:
     self._learning_start_reported = False
 
 
-  def act(self, states):
+  def act(self, states, noise):
     states = torch.from_numpy(states.astype(np.float32)).cuda()
     actions = np.zeros((self._num_homogeneous_agents, self._action_length))
     with torch.no_grad():
@@ -126,7 +126,7 @@ class Agent:
         self._actors_local[i].eval()
         actions_i = self._actors_local[i](states[i].unsqueeze(0))
         actions[i] = actions_i.cpu().numpy().squeeze(0)
-    return actions + self.noise.sample()
+    return actions + noise * self.noise.sample()
 
   def step(self, states, actions, rewards, next_states, dones, i_episode):
     self._experiences_seen += 1
