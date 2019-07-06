@@ -79,7 +79,7 @@ def train(hp, cli_args):
   logger.info('run_id %s using hyper parameters %s', run_id, hp)
 
   writer = tensorboardX.SummaryWriter(os.path.join('run/summary', run_id))
-  pbar = tqdm.tqdm(total=hp.num_episodes)
+  pbar = tqdm.tqdm(total=hp.num_episodes, desc=run_id)
 
   env = UnityEnvironment(file_name=cli_args.simulator, worker_id=cli_args.unity_worker_id)
   state_length = env.brains[BRAIN_NAME].vector_observation_space_size
