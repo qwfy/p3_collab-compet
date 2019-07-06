@@ -208,7 +208,7 @@ class Agent:
         scored.score = new_score
         self._memory.put(scored)
 
-      self._writer.add_scalar(f'critic_loss_agent_{i_agent}', critic_loss.item(), self._times_learned)
+      self._writer.add_scalar(f'agent_{i_agent}/critic_loss', critic_loss.item(), self._times_learned)
     f()
 
     def f():
@@ -224,7 +224,7 @@ class Agent:
       policy_loss.backward()
       self._actor_local_optimizers[i_agent].step()
 
-      self._writer.add_scalar(f'actor_loss_agent_{i_agent}', policy_loss.item(), self._times_learned)
+      self._writer.add_scalar(f'agent_{i_agent}/actor_loss', policy_loss.item(), self._times_learned)
     f()
 
   def _soft_update(self, i_agent):

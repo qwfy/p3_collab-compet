@@ -134,7 +134,7 @@ def train(hp, cli_args):
     episode_reward = np.max(episode_rewards)
     writer.add_scalar('episode_reward_agent_max', episode_reward, i_episode)
     for i, reward in enumerate(episode_rewards):
-      writer.add_scalar(f'episode_reward_agent_{i}', reward, i_episode)
+      writer.add_scalar(f'agent_{i}/episode_reward', reward, i_episode)
 
     window_rewards.append(episode_reward)
     mean_reward = np.mean(window_rewards)
