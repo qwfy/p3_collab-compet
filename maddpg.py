@@ -222,6 +222,7 @@ class Agent:
 
       policy_loss = -qs_l.mean()
       policy_loss.backward()
+      nn.utils.clip_grad_norm_(self._actors_local[i_agent].parameters(), 0.5)
       self._actor_local_optimizers[i_agent].step()
 
       self._writer.add_scalar(f'agent_{i_agent}/actor_loss', policy_loss.item(), self._times_learned)
