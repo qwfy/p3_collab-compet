@@ -50,9 +50,9 @@ class Critic(nn.Module):
 
   def __init__(self, state_length, action_length):
     nn.Module.__init__(self)
-    self.fc1 = nn.Linear(in_features=state_length, out_features=FC_SIZE)
+    self.fc1 = nn.Linear(in_features=state_length+action_length, out_features=FC_SIZE)
     self.bn1 = nn.BatchNorm1d(num_features=FC_SIZE)
-    self.fc2 = nn.Linear(in_features=FC_SIZE+action_length, out_features=FC_SIZE)
+    self.fc2 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
     self.bn2 = nn.BatchNorm1d(num_features=FC_SIZE)
     self.fc3 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
     self.bn3 = nn.BatchNorm1d(num_features=FC_SIZE)
@@ -60,8 +60,8 @@ class Critic(nn.Module):
     self._init_weights()
 
   def forward(self, states, actions):
-    states = F.relu(self.bn1(self.fc1(states)))
     x = torch.cat([states, actions], dim=1)
+    x = F.relu(self.bn1(self.fc1(x)))
     x = F.relu(self.bn2(self.fc2(x)))
     x = F.relu(self.bn3(self.fc3(x)))
     x = self.fc4(x)
