@@ -100,9 +100,6 @@ def train(hp, cli_args):
   current_noise = hp.initial_noise
 
   for i_episode in range(hp.num_episodes):
-    if i_episode >= 1:
-      current_noise = current_noise * hp.noise_decay
-
     states = env.reset(train_mode=True)[BRAIN_NAME].vector_observations
 
     # this records the episode reward for each agent
@@ -113,6 +110,7 @@ def train(hp, cli_args):
     agent.noise.reset()
 
     while True:
+      current_noise *= hp.noise_decay
       episode_length += 1
       actions = agent.act(states, noise=current_noise)
       env_info = env.step(actions)[BRAIN_NAME]
@@ -178,7 +176,7 @@ HP = HyperParam(
   start_learning_memory_size=5120,
   save_interval=100,
   initial_noise=0.5,
-  noise_decay=0.9994)
+  noise_decay=0.9999)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
