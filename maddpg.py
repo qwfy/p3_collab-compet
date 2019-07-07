@@ -26,24 +26,20 @@ class Actor(nn.Module):
     self.bn1 = nn.BatchNorm1d(num_features=FC_SIZE)
     self.fc2 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
     self.bn2 = nn.BatchNorm1d(num_features=FC_SIZE)
-    self.fc3 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
-    self.bn3 = nn.BatchNorm1d(num_features=FC_SIZE)
-    self.fc4 = nn.Linear(in_features=FC_SIZE, out_features=action_length)
+    self.fc3 = nn.Linear(in_features=FC_SIZE, out_features=action_length)
     self._init_weights()
 
   def forward(self, states):
     x = states
     x = F.relu(self.bn1(self.fc1(x)))
     x = F.relu(self.bn2(self.fc2(x)))
-    x = F.relu(self.bn3(self.fc3(x)))
-    x = F.tanh(self.fc4(x))
+    x = F.tanh(self.fc3(x))
     return x
 
   def _init_weights(self):
     self.fc1.weight.data.uniform_(*weight_range(self.fc1))
     self.fc2.weight.data.uniform_(*weight_range(self.fc2))
-    self.fc3.weight.data.uniform_(*weight_range(self.fc3))
-    self.fc4.weight.data.uniform_(-3e-3, 3e-3)
+    self.fc3.weight.data.uniform_(-3e-3, 3e-3)
 
 
 class Critic(nn.Module):
@@ -54,24 +50,20 @@ class Critic(nn.Module):
     self.bn1 = nn.BatchNorm1d(num_features=FC_SIZE)
     self.fc2 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
     self.bn2 = nn.BatchNorm1d(num_features=FC_SIZE)
-    self.fc3 = nn.Linear(in_features=FC_SIZE, out_features=FC_SIZE)
-    self.bn3 = nn.BatchNorm1d(num_features=FC_SIZE)
-    self.fc4 = nn.Linear(in_features=FC_SIZE, out_features=1)
+    self.fc3 = nn.Linear(in_features=FC_SIZE, out_features=1)
     self._init_weights()
 
   def forward(self, states, actions):
     x = torch.cat([states, actions], dim=1)
     x = F.relu(self.bn1(self.fc1(x)))
     x = F.relu(self.bn2(self.fc2(x)))
-    x = F.relu(self.bn3(self.fc3(x)))
-    x = self.fc4(x)
+    x = self.fc3(x)
     return x
 
   def _init_weights(self):
     self.fc1.weight.data.uniform_(*weight_range(self.fc1))
     self.fc2.weight.data.uniform_(*weight_range(self.fc2))
-    self.fc3.weight.data.uniform_(*weight_range(self.fc3))
-    self.fc4.weight.data.uniform_(-3e-3, 3e-3)
+    self.fc3.weight.data.uniform_(-3e-3, 3e-3)
 
 
 class Agent:
