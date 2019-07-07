@@ -21,3 +21,14 @@ class OUNoise:
     dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
     self.state = x + dx
     return self.state * self.scale
+
+class Normal:
+
+  def __init__(self, action_dimension):
+    self.action_dimension = action_dimension
+
+  def reset(self):
+    pass
+
+  def sample(self):
+    return np.random.standard_normal(self.action_dimension)

@@ -111,7 +111,7 @@ class Agent:
 
     self._memory = common.memory.RankPrioritized(max_size=hp.memory_max_size)
 
-    self.noise = common.noise.OUNoise(action_dimension=(self._num_homogeneous_agents, self._action_length))
+    self.noise = common.noise.Normal(action_dimension=(self._num_homogeneous_agents, self._action_length))
 
     self._times_learned = 0
     self._experiences_seen = 0
