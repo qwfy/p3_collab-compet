@@ -162,20 +162,20 @@ def train(hp, cli_args):
 
 # %%
 HP = HyperParam(
-  memory_max_size=int(1e5),
+  memory_max_size=int(1e6),
   memory_initial_alpha=0.5,
-  num_episodes=30000,
+  num_episodes=10000,
   batch_size=1024,
   gamma=0.95,
   critic_local_lr=3e-3,
   actor_local_lr=1e-3,
-  update_target_every_learnings=3,
+  update_target_every_learnings=5,
   learn_every_new_samples=128,
-  passes_every_learn=5,
-  soft_update_tau=1e-3,
+  passes_every_learn=2,
+  soft_update_tau=1e-2,
   start_learning_memory_size=5120,
   save_interval=100,
-  initial_noise=2,
+  initial_noise=5,
   noise_decay=0.9999)
 
 if __name__ == '__main__':
