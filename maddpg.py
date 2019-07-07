@@ -40,7 +40,7 @@ class Actor(nn.Module):
     x = F.relu(self.bn1(self.fc1(x)))
     x = F.relu(self.bn2(self.fc2(x)))
     x = F.relu(self.bn3(self.fc3(x)))
-    x = F.tanh(self.fc4(x))
+    x = self.fc4(x)
     return x
 
   def _init_weights(self):
