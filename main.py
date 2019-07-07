@@ -175,7 +175,7 @@ HP = HyperParam(
   soft_update_tau=1e-2,
   start_learning_memory_size=5120,
   save_interval=100,
-  initial_noise=0.9,
+  initial_noise=0.5,
   noise_decay=0.9999)
 
 if __name__ == '__main__':
