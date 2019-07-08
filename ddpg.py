@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torch.autograd as autograd
 import common
 import logging
 import os
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def weight_range(layer):
   in_features = layer.weight.data.size()[0]
-  rng = 1. / np.sqrt(in_features)
+  rng = 1 / np.sqrt(in_features)
   return -rng, rng
 
 
@@ -50,7 +49,7 @@ class Critic(nn.Module):
     nn.Module.__init__(self)
     self.fc1 = nn.Linear(in_features=state_length, out_features=400)
     self.bn1 = nn.BatchNorm1d(num_features=400)
-    self.fc2 = nn.Linear(in_features=400+action_length, out_features=300)
+    self.fc2 = nn.Linear(in_features=400 + action_length, out_features=300)
     self.fc3 = nn.Linear(in_features=300, out_features=1)
     self._init_weights()
 
@@ -69,11 +68,10 @@ class Critic(nn.Module):
 
 class Agent:
 
-  def __init__(self, state_length, action_length, hp, num_agents, writer):
+  def __init__(self, state_length, action_length, hp, writer):
     self._state_length = state_length
     self._action_length = action_length
     self._hp = hp
-    self._num_agents = num_agents
     self._writer = writer
 
     self._actor_local = Actor(state_length=state_length, action_length=action_length).cuda()
@@ -95,8 +93,7 @@ class Agent:
     self._memory = common.memory.Uniform(max_size=hp.memory_max_size)
 
     self._times_learned = 0
-    self._times_stepped = 0
-
+    self._num_experiences_seen = 0
 
   def act(self, states):
     states = torch.from_numpy(states.astype(np.float32)).cuda()
@@ -108,19 +105,20 @@ class Agent:
       return actions
 
   def step(self, states, actions, rewards, next_states, dones):
-    self._times_stepped += 1
-
     self._actor_local.train()
     self._actor_target.train()
     self._critic_local.train()
     self._critic_target.train()
+
     experiences = zip(states, actions, rewards, next_states, dones)
     for exp in experiences:
       self._memory.put(exp)
+      self._num_experiences_seen += 1
 
-    if len(self._memory) >= self._hp.batch_size and self._times_stepped % self._hp.learn_every_steps == 0:
-      for _ in range(self._hp.learn_passes):
-        self._learn()
+      if (len(self._memory) >= max(self._hp.batch_size, self._hp.start_learning_memory_size)
+        and self._num_experiences_seen % self._hp.learn_every_new_experiences == 0):
+        for _ in range(self._hp.times_consequtive_learn):
+          self._learn()
 
   def _learn(self):
     self._times_learned += 1
@@ -155,6 +153,7 @@ class Agent:
       if self._times_learned % 100 == 0:
         for param in self._critic_local.parameters():
           self._writer.add_histogram('critic_grad', param.grad.cpu().numpy(), self._times_learned)
+
     f()
 
     def f():
@@ -164,12 +163,9 @@ class Agent:
       # [batch, num_actions]
       as_l = self._actor_local(batch.states)
       qs_l = self._critic_local(batch.states, as_l)
-      # [batch]
-      qs_l = qs_l.squeeze(dim=1)
-      dq_da = autograd.grad(outputs=qs_l, inputs=as_l, grad_outputs=torch.ones(self._hp.batch_size).cuda(), only_inputs=True)
-      dj = autograd.grad(outputs=as_l, inputs=self._actor_local.parameters(), grad_outputs=dq_da, only_inputs=True)
-      for grad, param in zip(dj, self._actor_local.parameters()):
-        param.grad = grad / self._num_agents
+
+      policy_loss = -qs_l.mean()
+      policy_loss.backward()
       self._actor_local_optimizer.step()
 
       if self._times_learned % 100 == 0:
@@ -177,12 +173,11 @@ class Agent:
           self._writer.add_histogram('actor_grad', param.grad.cpu().numpy(), self._times_learned)
         for a in as_l:
           self._writer.add_histogram('actions_local', a.detach().cpu().numpy(), self._times_learned)
+
     f()
 
-
-    if self._times_learned % self._hp.update_target_every == 0:
+    if self._times_learned % self._hp.update_target_every_learnings == 0:
       self._soft_update()
-
 
   def _soft_update(self):
     tau = self._hp.soft_update_tau
@@ -194,17 +189,12 @@ class Agent:
         new_t = tau * l.data + (1 - tau) * t.data
         t.data = new_t
 
-
   def _copy_weights(self):
     with torch.no_grad():
       for l, t in zip(self._critic_local.parameters(), self._critic_target.parameters()):
         t.data = l.data
       for l, t in zip(self._actor_local.parameters(), self._actor_target.parameters()):
         t.data = l.data
-
-
-  def reset_noise(self):
-    self._noise.reset()
 
   def save(self, directory):
     torch.save(self._actor_local.state_dict(), os.path.join(directory, 'actor_local.pt'))

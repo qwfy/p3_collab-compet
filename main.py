@@ -18,7 +18,7 @@ os.makedirs('run/log', exist_ok=True)
 
 import time
 from unityagents import UnityEnvironment
-import maddpg
+import ddpg
 import tensorboardX
 import git
 import numpy as np
@@ -26,9 +26,8 @@ import collections
 import dataclasses
 import random
 import torch
-import itertools
-import pickle
 import argparse
+import tqdm
 
 # %%
 BRAIN_NAME = 'TennisBrain'
@@ -50,12 +49,10 @@ class HyperParam:
   critic_local_lr: float
   actor_local_lr: float
   update_target_every_learnings: int
-  learn_every_new_samples: int
-  passes_every_learn: int
+  learn_every_new_experiences: int
+  times_consequtive_learn: int
   soft_update_tau: float
   save_interval: int
-  initial_noise: float
-  noise_decay: float
 
 
 #%%
@@ -100,22 +97,18 @@ def train(hp, simulator, unity_worker_id):
   state_length = env.brains[BRAIN_NAME].vector_observation_space_size
   action_length = env.brains[BRAIN_NAME].vector_action_space_size
 
-  agent = maddpg.Agent(
-    state_length=state_length,
+  agent = ddpg.Agent(
+    state_length=state_length * NUM_STACKS,
     action_length=action_length,
     hp=hp,
-    num_homogeneous_agents=NUM_HOMOGENEOUS_AGENTS,
-    num_stacks=NUM_STACKS,
     writer=writer)
 
   window_rewards = collections.deque(maxlen=SOLVE_NUM_EPISODES)
 
   last_save_episode = None
 
-  current_noise = hp.initial_noise
-
+  pbar = tqdm.tqdm(total=hp.num_episodes, desc=run_id)
   for i_episode in range(hp.num_episodes):
-    logger.info('begin episode: %s', i_episode)
     states = env.reset(train_mode=True)[BRAIN_NAME].vector_observations
 
     # this records the episode reward for each agent
@@ -123,18 +116,15 @@ def train(hp, simulator, unity_worker_id):
 
     episode_length = 0
 
-    agent.noise.reset()
-
     while True:
-      current_noise *= hp.noise_decay
       episode_length += 1
-      actions = agent.act(states, noise=current_noise)
+      actions = agent.act(states)
       env_info = env.step(actions)[BRAIN_NAME]
       next_states = env_info.vector_observations
       rewards = env_info.rewards
       dones = env_info.local_done
 
-      agent.step(states, actions, rewards, next_states, dones, i_episode)
+      agent.step(states, actions, rewards, next_states, dones)
       episode_rewards += rewards
 
       if any(dones):
@@ -142,6 +132,7 @@ def train(hp, simulator, unity_worker_id):
       else:
         states = next_states
 
+    pbar.update(1)
     writer.add_scalar('episode_length', episode_length, i_episode)
 
     # the episode reward is defined to be the maximum of all agents
@@ -173,99 +164,27 @@ def train(hp, simulator, unity_worker_id):
     f'{time_stop - time_start:.2f}')
   env.close()
 
-
-# %%
-
-
-
-def train_partial(arg):
-  simulator, unity_worker_id, hp = arg
-  return train(hp=hp, simulator=simulator, unity_worker_id=unity_worker_id)
-
-def grid_search():
-  many_memory_max_size = [int(1e6)]
-  many_memory_initial_alpha = [0.5]
-  many_num_episodes = [1500]
-  many_batch_size = [64, 256, 1024]
-  many_gamma = [0.8, 0.9, 0.95, 0.99]
-  many_critic_local_lr = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
-  many_actor_local_lr = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
-  many_update_target_every_learnings = [1, 3, 10, 20]
-  many_learn_every_new_samples = [10, 100, 300]
-  many_passes_every_learn = [1, 3, 10, 30, 100]
-  many_soft_update_tau = [1e-1, 1e-2, 1e-3]
-  many_start_learning_memory_size = [5120]
-  many_save_interval = [100]
-  many_initial_noise = [0.01, 0.1, 0.3, 0.9]
-  many_noise_decay = [0.8, 0.9, 0.99, 0.999, 0.9999]
-
-  cartesian = itertools.product(
-    many_memory_max_size,
-    many_memory_initial_alpha,
-    many_num_episodes,
-    many_batch_size,
-    many_gamma,
-    many_critic_local_lr,
-    many_actor_local_lr,
-    many_update_target_every_learnings,
-    many_learn_every_new_samples,
-    many_passes_every_learn,
-    many_soft_update_tau,
-    many_start_learning_memory_size,
-    many_save_interval,
-    many_initial_noise,
-    many_noise_decay)
-  cartesian = [HyperParam(
-    memory_max_size=memory_max_size,
-    memory_initial_alpha=memory_initial_alpha,
-    num_episodes=num_episodes,
-    batch_size=batch_size,
-    gamma=gamma,
-    critic_local_lr=critic_local_lr,
-    actor_local_lr=actor_local_lr,
-    update_target_every_learnings=update_target_every_learnings,
-    learn_every_new_samples=learn_every_new_samples,
-    passes_every_learn=passes_every_learn,
-    soft_update_tau=soft_update_tau,
-    start_learning_memory_size=start_learning_memory_size,
-    save_interval=save_interval,
-    initial_noise=initial_noise,
-    noise_decay=noise_decay,
-    ) for (
-    memory_max_size,
-    memory_initial_alpha,
-    num_episodes,
-    batch_size,
-    gamma,
-    critic_local_lr,
-    actor_local_lr,
-    update_target_every_learnings,
-    learn_every_new_samples,
-    passes_every_learn,
-    soft_update_tau,
-    start_learning_memory_size,
-    save_interval,
-    initial_noise,
-    noise_decay) in cartesian
-    ]
-  random.shuffle(cartesian)
-
-  search_space = list(zip(itertools.repeat('Tennis_Linux_NoVis/Tennis.x86_64'),
-                          range(50, 50+len(cartesian)),
-                          cartesian))
-
-  logger.info('dumping search space')
-  with open('search_space.pkl', 'wb') as f:
-    pickle.dump(search_space, f)
-  logger.info('dumped search space')
+#%%
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
-  parser.add_argument('-n', type=int, required=True)
+  parser.add_argument('--simulator', type=str, default='Tennis_Linux_NoVis/Tennis.x86_64')
+  parser.add_argument('--unity_worker_id', type=int, default=0)
   args = parser.parse_args()
 
-  with open('search_space.pkl', 'rb') as f:
-    search_space = pickle.load(f)
-  arg = search_space[args.n]
-  del search_space
-  train_partial(arg)
+  hp = HyperParam(
+    memory_max_size=int(1e6),
+    memory_initial_alpha=0.5,
+    num_episodes=10000,
+    batch_size=1024,
+    gamma=0.95,
+    critic_local_lr=1e-2,
+    actor_local_lr=1e-2,
+    update_target_every_learnings=5,
+    learn_every_new_experiences=128,
+    times_consequtive_learn=2,
+    soft_update_tau=1e-2,
+    start_learning_memory_size=5120,
+    save_interval=100)
+
+  train(hp=hp, simulator=args.simulator, unity_worker_id=args.unity_worker_id)
