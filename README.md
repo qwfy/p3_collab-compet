@@ -29,7 +29,7 @@ The trained model is saved at the directory: `run/model/Jul09_08-51-44_0_8266`.
 
 To reproduce:
 
-- `git checkout 524cbdebbbb159b3c180bfcc760e8f78bbd9b31d`
+- `git checkout 200e2233aab134aea151daa621802d55ee9cc198`
 - `python -m main`
 
 Note that at the end of the training, due to the good performance, the episode length will become longer, so the training speed (episodes per second) will become small.
