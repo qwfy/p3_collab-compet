@@ -3,3 +3,4 @@ Tennis_Linux_NoVis/**/* filter=lfs diff=lfs merge=lfs -text
 Soccer_Linux/**/* filter=lfs diff=lfs merge=lfs -text
 Soccer_Linux_NoVis/**/* filter=lfs diff=lfs merge=lfs -text
 search_space.pkl filter=lfs diff=lfs merge=lfs -text
+run/model/Jul09_08-51-44_0_8266/* filter=lfs diff=lfs merge=lfs -text
