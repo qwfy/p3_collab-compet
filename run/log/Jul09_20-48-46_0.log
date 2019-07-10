@@ -1,0 +1,59 @@
+[2019-07-09 20:48:46,007] [INFO] [main.py:88] ======= run_id Jul09_20-48-46_0 started at Jul09_20-48-46_+0800 =======
+[2019-07-09 20:48:46,491] [INFO] [main.py:89] using commit: 524cbdebbbb159b3c180bfcc760e8f78bbd9b31d (clean=True): Use parameters from the last project
+
+[2019-07-09 20:48:46,492] [INFO] [main.py:91] run_id Jul09_20-48-46_0 using hyper parameters: HyperParam(memory_max_size=1000000, memory_initial_alpha=0.5, start_learning_memory_size=0, num_episodes=10000, batch_size=128, gamma=0.99, critic_local_lr=0.001, actor_local_lr=0.001, update_target_every_learnings=1, learn_every_new_experiences=20, times_consequtive_learn=10, soft_update_tau=0.001, save_interval=100), unity_worker_id: 0
+[2019-07-09 20:48:46,493] [INFO] [main.py:68] LD_LIBRARY_PATH: /home/alpha/DRLND/p3_collab-compet/Tennis_Linux_NoVis/Tennis_Data/Plugins/x86_64/:/home/alpha/DRLND/p3_collab-compet/Tennis_Linux_NoVis/Tennis_Data/MonoBleedingEdge/x86_64/
+[2019-07-09 20:48:48,081] [INFO] [environment.py:105] 
+'Academy' started successfully!
+Unity Academy name: Academy
+        Number of Brains: 1
+        Number of External Brains : 1
+        Lesson number : 0
+        Reset Parameters :
+		
+Unity brain name: TennisBrain
+        Number of Visual Observations (per agent): 0
+        Vector Observation space type: continuous
+        Vector Observation space size (per agent): 8
+        Number of stacked Vector Observation: 3
+        Vector Action space type: continuous
+        Vector Action space size (per agent): 2
+        Vector Action descriptions: , 
+[2019-07-09 20:48:50,655] [INFO] [ddpg.py:88] architecture of model actor_local: Actor(
+  (fc1): Linear(in_features=24, out_features=400, bias=True)
+  (bn1): BatchNorm1d(400, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (fc2): Linear(in_features=400, out_features=300, bias=True)
+  (fc3): NoisyLinear(in_features=300 out_features=2, bias=True)
+)
+[2019-07-09 20:48:50,656] [INFO] [ddpg.py:88] architecture of model actor_target: Actor(
+  (fc1): Linear(in_features=24, out_features=400, bias=True)
+  (bn1): BatchNorm1d(400, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (fc2): Linear(in_features=400, out_features=300, bias=True)
+  (fc3): NoisyLinear(in_features=300 out_features=2, bias=True)
+)
+[2019-07-09 20:48:50,656] [INFO] [ddpg.py:88] architecture of model critic_local: Critic(
+  (fc1): Linear(in_features=24, out_features=400, bias=True)
+  (bn1): BatchNorm1d(400, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (fc2): Linear(in_features=402, out_features=300, bias=True)
+  (fc3): Linear(in_features=300, out_features=1, bias=True)
+)
+[2019-07-09 20:48:50,656] [INFO] [ddpg.py:88] architecture of model critic_target: Critic(
+  (fc1): Linear(in_features=24, out_features=400, bias=True)
+  (bn1): BatchNorm1d(400, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (fc2): Linear(in_features=402, out_features=300, bias=True)
+  (fc3): Linear(in_features=300, out_features=1, bias=True)
+)
+[2019-07-09 21:12:14,563] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8066
+[2019-07-09 21:18:27,766] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8166
+[2019-07-09 21:27:07,075] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8266
+[2019-07-09 21:31:49,830] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8366
+[2019-07-09 21:37:12,500] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8548
+[2019-07-09 21:40:50,854] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8648
+[2019-07-09 21:44:32,506] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8769
+[2019-07-09 21:48:38,007] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_8900
+[2019-07-09 21:53:04,148] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_9091
+[2019-07-09 21:58:39,421] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_9259
+[2019-07-09 22:03:26,554] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_9359
+[2019-07-09 22:08:18,750] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_9529
+[2019-07-09 22:16:02,591] [INFO] [main.py:157] model saved to directory: run/model/Jul09_20-48-46_0_9990
+[2019-07-09 22:17:22,337] [INFO] [main.py:164] run_id Jul09_20-48-46_0 completed at Jul09_22-17-22_+0800, time cost: 5316.34 seconds
