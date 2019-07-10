@@ -21,7 +21,7 @@ The environment of the project should be setup as follows. (Make sure you have g
 - activate the conda environment
 - `pip install -r requirements.txt`
 - `pip install -U protobuf`
-
+- download the environment from [here](https://s3-us-west-1.amazonaws.com/udacity-drlnd/P3/Tennis/Tennis_Linux.zip), and extract it to some directory, say `./tennis_env/` for later use
 
 ## Instructions
 
@@ -30,6 +30,6 @@ The trained model is saved at the directory: `run/model/Jul09_08-51-44_0_8266`.
 To reproduce:
 
 - `git checkout 200e2233aab134aea151daa621802d55ee9cc198`
-- `python -m main`
+- `python -m main --simulator=path/to/the/Tennis.x86_64/executable` e.g. `python -m main --simulator=tennis_env/Tennis.x86_64`
 
 Note that at the end of the training, due to the good performance, the episode length will become longer, so the training speed (episodes per second) will become small.
